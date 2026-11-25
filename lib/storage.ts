@@ -30,7 +30,9 @@ export async function readPosts(): Promise<Snapshot> {
       return { posts: structuredClone(seedPosts) as Post[] };
     }
     const text = await new Response(res.stream).text();
-    return { posts: JSON.parse(text) as Post[], etag: res.blob.etag };
+    // get()은 W/"..." 모양의 약한 etag를 주는데, put()의 ifMatch는 W/ 없는 값과 비교한다.
+    const etag = res.blob.etag.replace(/^W\//, "");
+    return { posts: JSON.parse(text) as Post[], etag };
   }
 
   try {
