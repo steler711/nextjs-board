@@ -63,6 +63,23 @@ function checkPassword(password: string, stored: string): boolean {
   return saved.length === input.length && crypto.timingSafeEqual(saved, input);
 }
 
+// 관리자 비밀번호: Vercel 환경변수(또는 .env.local)의 ADMIN_PASSWORD.
+// 이 값을 입력하면 비밀번호를 몰라도 어떤 글이든 수정·삭제할 수 있다.
+// 설정하지 않으면 관리자 기능은 꺼져 있다.
+function isAdmin(password: string): boolean {
+  const admin = process.env.ADMIN_PASSWORD;
+  if (!admin) return false;
+  // 길이가 달라도 비교 시간이 같도록 해시로 바꿔서 비교한다.
+  const a = crypto.createHash("sha256").update(password).digest();
+  const b = crypto.createHash("sha256").update(admin).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
+// 글쓴이 비밀번호 또는 관리자 비밀번호가 맞으면 true
+function canModify(password: string, post: Post): boolean {
+  return checkPassword(password, post.passwordHash) || isAdmin(password);
+}
+
 function toPublic(post: Post): PublicPost {
   const { id, author, title, content, createdAt, updatedAt } = post;
   return { id, author, title, content, createdAt, updatedAt };
@@ -85,6 +102,13 @@ function password(value: unknown): string {
   if (value.length < LIMITS.password.min || value.length > LIMITS.password.max) {
     throw new InputError(`비밀번호는 ${LIMITS.password.min}~${LIMITS.password.max}자로 정하세요.`);
   }
+  return value;
+}
+
+// 수정·삭제 때 입력한 비밀번호. 관리자 비밀번호는 20자보다 길 수 있어서 길이 제한을 넉넉히 둔다.
+function enteredPassword(value: unknown): string {
+  if (typeof value !== "string" || value.length === 0) throw new InputError("비밀번호를 입력하세요.");
+  if (value.length > 200) throw new InputError("비밀번호가 너무 깁니다.");
   return value;
 }
 
@@ -130,14 +154,14 @@ export async function createPost(input: Record<string, unknown>): Promise<Public
 export type MutationResult = { ok: true; post?: PublicPost } | { ok: false; reason: "not_found" | "wrong_password" };
 
 export async function updatePost(id: number, input: Record<string, unknown>): Promise<MutationResult> {
-  const pw = password(input.password);
+  const pw = enteredPassword(input.password);
   const title = text(input.title, "제목", LIMITS.title);
   const content = text(input.content, "내용", LIMITS.content);
 
   return mutate<MutationResult>((posts) => {
     const post = posts.find((p) => p.id === id);
     if (!post) return { result: { ok: false, reason: "not_found" }, save: false };
-    if (!checkPassword(pw, post.passwordHash)) return { result: { ok: false, reason: "wrong_password" }, save: false };
+    if (!canModify(pw, post)) return { result: { ok: false, reason: "wrong_password" }, save: false };
     post.title = title;
     post.content = content;
     post.updatedAt = new Date().toISOString();
@@ -146,12 +170,12 @@ export async function updatePost(id: number, input: Record<string, unknown>): Pr
 }
 
 export async function deletePost(id: number, input: Record<string, unknown>): Promise<MutationResult> {
-  const pw = password(input.password);
+  const pw = enteredPassword(input.password);
 
   return mutate<MutationResult>((posts) => {
     const index = posts.findIndex((p) => p.id === id);
     if (index === -1) return { result: { ok: false, reason: "not_found" }, save: false };
-    if (!checkPassword(pw, posts[index].passwordHash)) return { result: { ok: false, reason: "wrong_password" }, save: false };
+    if (!canModify(pw, posts[index])) return { result: { ok: false, reason: "wrong_password" }, save: false };
     posts.splice(index, 1);
     return { result: { ok: true }, save: true };
   });

@@ -77,15 +77,15 @@ export default function PostForm(props: Props) {
             name="password"
             type="password"
             required
-            minLength={LIMITS.password.min}
-            maxLength={LIMITS.password.max}
+            minLength={isEdit ? undefined : LIMITS.password.min}
+            maxLength={isEdit ? undefined : LIMITS.password.max}
             autoComplete={isEdit ? "current-password" : "new-password"}
             aria-describedby="password-hint"
             className={fieldClass}
           />
           <p id="password-hint" className="mt-1.5 text-sm text-pencil">
             {isEdit
-              ? "글을 쓸 때 정한 비밀번호를 입력하세요."
+              ? "글을 쓸 때 정한 비밀번호나 관리자 비밀번호를 입력하세요."
               : `${LIMITS.password.min}~${LIMITS.password.max}자. 글을 고치거나 지울 때 필요해요.`}
           </p>
         </div>
