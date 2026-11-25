@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "author": "김수강",
+    "title": "4일차 수업 첫 글입니다",
+    "content": "오늘은 Next.js로 게시판을 만들었습니다.\n글은 data/posts.json 파일에 저장됩니다.",
+    "passwordHash": "e705a0f305e7d8d5affa096e331039cd:0e48555853d9a95c545695f173242afc5e076bcc4eb502e07ef492b4eb10528c",
+    "createdAt": "2026-11-25T11:50:43.079Z",
+    "updatedAt": "2026-11-25T12:01:56.549Z"
+  },
+  {
+    "id": 2,
+    "author": "이선생",
+    "title": "과제 안내",
+    "content": "다음 시간까지 게시판에 댓글 기능을 붙여 보세요.",
+    "passwordHash": "89468e327fea0bc3d2792dc586856ae9:c0b5e92008c367b7ef831e573652fdefa2a200ef170853278019981bed6545e8",
+    "createdAt": "2026-11-25T11:50:59.573Z"
+  }
+]
